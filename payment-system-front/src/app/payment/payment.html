@@ -1,0 +1,11 @@
+<h2>Stripe Payment Example</h2>
+
+<label>Amount (USD cents):</label>
+<input type="number" [(ngModel)]="amount" />
+
+<button (click)="pay()">Pay</button>
+
+<div id="card-element" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+<div id="payment-result" style="margin-top: 20px; font-weight: bold;">
+  {{ paymentResult }}
+</div>
