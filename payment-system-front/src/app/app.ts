@@ -9,4 +9,5 @@ import { PaymentComponent } from './payment/payment';
 })
 export class App {
   protected title = 'payment-system-front';
+  
 }
