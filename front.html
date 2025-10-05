@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Payment</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <h2>Stripe Payment Example</h2>
+
+    <label>Amount (USD cents):</label>
+    <input type="number" id="amount" value="500" />
+
+    <button id="payButton">Pay</button>
+
+    <div id="card-element" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+    <div id="payment-result" style="margin-top: 20px; font-weight: bold;"></div>
+
+    <script>
+        const stripe = Stripe("pk_test_51SE8bhGRNfVjVOlY12joAisWwfmcKec65lnLcMlZ7qf321pMkEyrw6SotvupUTVi1wZhJbV6pD7Xu4TaeN7rGOpN00ArIYgAYM");
+
+        const elements = stripe.elements();
+        const card = elements.create("card");
+        card.mount("#card-element");
+
+        const payButton = document.getElementById("payButton");
+
+        payButton.addEventListener("click", async () => {
+            const amount = document.getElementById("amount").value;
+
+            document.getElementById("payment-result").innerText = "Creating payment...";
+
+            // 1️⃣ Call backend to create PaymentIntent
+            const createResponse = await fetch("http://localhost:8080/api/payments/create", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({amount: amount, method:"card"})
+            });
+
+            if (!createResponse.ok) {
+                document.getElementById("payment-result").innerText = "Error creating payment intent.";
+                return;
+            }
+
+            const paymentData = await createResponse.json();
+            const clientSecret = paymentData.clientSecret;
+
+            document.getElementById("payment-result").innerText = "Confirming payment...";
+
+            // 2️⃣ Confirm payment with Stripe.js
+            const {error, paymentIntent} = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                    card: card
+                }
+            });
+
+            if (error) {
+                document.getElementById("payment-result").innerText = "Error: " + error.message;
+                console.error(error);
+            } else if (paymentIntent && paymentIntent.status === "succeeded") {
+                document.getElementById("payment-result").innerText =
+                    "✅ Payment succeeded! PaymentIntent ID: " + paymentIntent.id;
+
+                console.log("Confirmed PaymentIntent:", paymentIntent.id);
+            } else {
+                document.getElementById("payment-result").innerText =
+                    "Payment status: " + paymentIntent.status;
+            }
+        });
+    </script>
+</body>
+</html>
